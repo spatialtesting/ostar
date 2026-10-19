@@ -128,6 +128,24 @@
     line-height:1.55;
   }
 
+  /* ---------- Home dashboard ---------- */
+  .dash-profile-row{display:flex; align-items:center; gap:12px; margin:32px 0 12px;}
+  .dash-avatar{
+    width:36px; height:36px; border-radius:50%;
+    background:var(--compass-purple); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:13px; flex-shrink:0;
+  }
+  .dash-profile-name{font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:15px;}
+  .dash-profile-inst{font-size:12px; color:var(--ink-faint); font-family:'IBM Plex Mono', monospace;}
+  .dash-tile-row{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; max-width:56ch;}
+  .dash-tile{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:12px 14px;}
+  .dash-tile .dash-tnum{font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:22px; line-height:1;}
+  .dash-tile .dash-tlabel{font-size:11px; color:var(--ink-soft); margin-top:5px; line-height:1.35;}
+  .dash-tile.blue .dash-tnum{color:var(--compass-blue);}
+  .dash-tile.gold .dash-tnum{color:var(--compass-gold);}
+  .dash-tile.green .dash-tnum{color:var(--compass-green);}
+
   /* ---------- Home / overview ---------- */
   .home-steps{
     display:grid;
@@ -1497,6 +1515,8 @@
       <div class="home-step"><span class="home-step-num" style="color:var(--compass-gold);">●</span><div><strong>Catalog</strong><p>Browse our catalog of spatial tests that have been adapted for online administration.</p></div></div>
       <div class="home-step"><span class="home-step-num" style="color:var(--compass-green);">●</span><div><strong>Profile</strong><p>View and edit your profile information.</p></div></div>
     </div>
+
+    <div id="home-dashboard"></div>
   </div>
 
   <!-- CATALOG VIEW -->
@@ -1843,7 +1863,7 @@ function showApp(session){
     : session.user.email;
   isAdmin = ADMIN_EMAILS.includes((session.user.email || '').toLowerCase());
   document.getElementById('nav-admin').classList.toggle('hidden', !isAdmin);
-  showView('view-home');
+  goToHome();
   fetchAndMergeCustomTests();
   refreshAdminStatus();
 }
@@ -2874,6 +2894,85 @@ function showView(id){
 
 function goToHome(){
   showView('view-home');
+  renderHomeDashboard();
+}
+
+// Every battery this researcher owns, with a participant count per battery.
+// Returns null if the session was lost (requireUser() already redirected).
+async function fetchResearcherBatteries(){
+  if (DEV_MODE) return localDatasets;
+  const user = await requireUser();
+  if (!user) return null;
+
+  const { data, error } = await supabaseClient
+    .from('batteries')
+    .select('id, status')
+    .eq('researcher_id', user.id);
+  if (error) throw new Error(error.message);
+  const rows = data.map(r => ({ id: r.id, status: r.status || 'draft', participantCount: 0 }));
+
+  if (rows.length > 0){
+    const { data: resultRows, error: countError } = await supabaseClient
+      .from('psychojs_results')
+      .select('session_id')
+      .in('session_id', rows.map(r => r.id));
+    if (!countError && resultRows){
+      const counts = {};
+      resultRows.forEach(r => { counts[r.session_id] = (counts[r.session_id] || 0) + 1; });
+      rows.forEach(r => { r.participantCount = counts[r.id] || 0; });
+    }
+  }
+  return rows;
+}
+
+// Slim Home dashboard: who's logged in, how many studies are running or
+// piloting, and how many participants the running ones have.
+async function renderHomeDashboard(){
+  const wrap = document.getElementById('home-dashboard');
+  const user = await requireUser();
+  if (!user) return;
+
+  let profile = { name: '', institution: '' };
+  if (DEV_MODE){
+    profile = devProfile;
+  } else {
+    const { data } = await supabaseClient
+      .from('researchers')
+      .select('name, institution')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (data) profile = { name: data.name || '', institution: data.institution || '' };
+  }
+  const displayName = profile.name || user.email;
+  const initials = displayName.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || 'U';
+
+  let rows;
+  try {
+    rows = await fetchResearcherBatteries();
+  } catch (e){
+    wrap.innerHTML = '';
+    return;
+  }
+  if (rows === null) return;
+
+  const running = rows.filter(r => r.status === 'run');
+  const piloting = rows.filter(r => r.status === 'pilot');
+  const activeParticipants = running.reduce((sum, r) => sum + (r.participantCount || 0), 0);
+
+  wrap.innerHTML = `
+    <div class="dash-profile-row">
+      <div class="dash-avatar">${escapeHtml(initials)}</div>
+      <div>
+        <div class="dash-profile-name">${escapeHtml(displayName)}</div>
+        ${profile.institution ? `<div class="dash-profile-inst">${escapeHtml(profile.institution)}</div>` : ''}
+      </div>
+    </div>
+    <div class="dash-tile-row">
+      <div class="dash-tile gold"><div class="dash-tnum">${running.length}</div><div class="dash-tlabel">studies running</div></div>
+      <div class="dash-tile blue"><div class="dash-tnum">${piloting.length}</div><div class="dash-tlabel">studies piloting</div></div>
+      <div class="dash-tile green"><div class="dash-tnum">${activeParticipants}</div><div class="dash-tlabel">participants in running studies</div></div>
+    </div>
+  `;
 }
 
 function goToCatalog(){
