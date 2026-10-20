@@ -2233,7 +2233,10 @@ let currentAdminRows = [];
 // ----------------------------
 // SUPABASE CONNECTION
 // ----------------------------
-const RUNNER_URL = "https://mitchmunns.github.io/spatialtests/v2/test_creator/index.html";
+// New participant links use this site's own copy of the participant page.
+// Links already sent out with the old mitchmunns.github.io address keep
+// working: that copy is untouched and both read the same database.
+const RUNNER_URL = "https://spatialtesting.org/test_creator/index.html";
 
 const SUPABASE_URL = "https://lfboldtuuwfayloofdnm.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_EfNrQHSaudaeiW-DYB5S0A_W863mPxN";
