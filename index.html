@@ -79,7 +79,7 @@
     flex-direction:column;
     gap:14px;
     padding:18px 22px 16px;
-    margin-bottom:20px;
+    margin-bottom:14px;
     border-radius:14px;
     background:linear-gradient(125deg, #1C4A86 0%, #2A67B4 52%, #4B35B0 100%);
     box-shadow:0 6px 18px rgba(20,40,63,0.18);
@@ -181,10 +181,13 @@
     border:1px solid var(--line);
     border-radius:8px;
     box-shadow:0 2px 10px rgba(20,40,63,0.06);
-    padding:20px 30px 14px;
+    padding:16px 30px 12px;
   }
   #view-home p.view-sub{margin-bottom:14px;}
-  .home-hero{display:flex; align-items:center; gap:28px; margin-bottom:6px;}
+  /* Text top-aligned with the drawn part of the logo (the image has about
+     7px of white above the compass at this size). */
+  .home-hero{display:flex; align-items:flex-start; gap:36px; margin-bottom:22px;}
+  .home-intro{padding-top:5px;}
   .home-hero img{height:120px; width:auto; flex-shrink:0;}
   .home-hero h1.view-title{font-size:21px; font-weight:700; line-height:1.25; margin:0 0 4px;}
   #view-home .home-intro p.view-sub{margin:0;}
@@ -192,8 +195,22 @@
     .home-hero{flex-direction:column; align-items:flex-start; gap:12px;}
     .home-hero img{height:80px;}
   }
-  #view-home .home-steps{gap:4px 28px; margin:0; grid-template-columns:1fr 1fr;}
-  @media (max-width:720px){ #view-home .home-steps{grid-template-columns:1fr;} }
+  /* Home links as tiles, each with a thin border in the logo's five colours
+     (the same stripe as the top edge of the page panels). */
+  #view-home .home-steps{gap:10px; margin:0; grid-template-columns:repeat(4, 1fr);}
+  #view-home .home-step{
+    border:1px solid transparent; border-radius:9px; padding:9px 12px 10px;
+    background:
+      linear-gradient(var(--card), var(--card)) padding-box,
+      linear-gradient(100deg,
+        color-mix(in srgb, var(--compass-blue) 55%, #fff), color-mix(in srgb, var(--compass-purple) 55%, #fff),
+        color-mix(in srgb, var(--compass-red) 55%, #fff), color-mix(in srgb, var(--compass-gold) 55%, #fff),
+        color-mix(in srgb, var(--compass-green) 55%, #fff)) border-box;
+  }
+  #view-home .home-step-num{display:none;}
+  #view-home .home-step p{font-size:12.5px; line-height:1.45;}
+  @media (max-width:900px){ #view-home .home-steps{grid-template-columns:1fr 1fr;} }
+  @media (max-width:560px){ #view-home .home-steps{grid-template-columns:1fr;} }
   @media (max-width:640px){ .home-panel{padding:22px 18px 24px;} }
   .home-steps{
     display:grid;
@@ -386,6 +403,28 @@
   .team-sub{margin:8px 0 0 4px; padding-left:14px; border-left:2px solid var(--line);}
   .team-sub li{padding:5px 0;}
   .team-sub li b{font-size:13.5px;}
+  .battery-dock{
+    position:fixed; top:0; right:0; bottom:0; width:280px; z-index:850;
+    background:var(--bg); border-left:1px solid var(--line-strong);
+    box-shadow:-10px 0 28px rgba(20,40,63,0.12);
+    display:flex; flex-direction:column; padding:0 16px 16px;
+  }
+  .battery-dock-head{display:flex; align-items:baseline; justify-content:space-between; padding:16px 0 10px; border-bottom:1px solid var(--line); margin-bottom:10px;}
+  .battery-dock-head strong{font-family:'Space Grotesk', sans-serif; font-size:17px;}
+  .battery-dock-head span{font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--ink-faint);}
+  #battery-dock-body{flex:1; overflow-y:auto;}
+  .battery-dock-empty{font-size:13px; color:var(--ink-soft); line-height:1.5;}
+  .battery-dock-list{list-style:none; margin:0; padding:0;}
+  .battery-dock-list li{display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin-bottom:8px;}
+  .battery-dock-num{flex-shrink:0; width:28px; height:28px; border-radius:50%; border:2.5px solid var(--order-colour); color:var(--order-colour); background:#fff; display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:13px;}
+  .battery-dock-name{font-size:13px; font-weight:600; line-height:1.3; display:flex; flex-direction:column;}
+  .battery-dock-name small{font-weight:400; font-size:11.5px; color:var(--ink-faint);}
+  .battery-dock-time{font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--ink-soft); margin:4px 0 0;}
+  .battery-dock-go{margin-top:12px; width:100%;}
+  @media (min-width:1100px){ body.battery-docked{padding-right:280px;} }
+  /* If the guide panel is open too, the battery panel moves to the left. */
+  body.guide-docked .battery-dock{right:auto; left:0; border-left:none; border-right:1px solid var(--line-strong); box-shadow:10px 0 28px rgba(20,40,63,0.12);}
+  @media (min-width:1100px){ body.guide-docked.battery-docked{padding-left:280px;} }
   .guide-title-row{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;}
   .guide-dock-btn{width:auto; padding:8px 14px; font-size:13px;}
   .guide-dock{
@@ -2221,6 +2260,14 @@
   <div id="guide-dock-body"></div>
 </aside>
 
+<!-- BATTERY SIDE PANEL — the battery so far, shown beside the Catalog and a
+     test's settings while tests are being added. -->
+<aside class="battery-dock hidden" id="battery-dock" aria-label="Your battery">
+  <div class="battery-dock-head"><strong>Your battery</strong><span id="battery-dock-count"></span></div>
+  <div id="battery-dock-body"></div>
+  <button class="btn accent battery-dock-go" type="button" onclick="goToBattery()">Go to battery &rarr;</button>
+</aside>
+
 <!-- PROFILE MODAL -->
 <div class="modal-overlay hidden" id="profile-modal">
   <div class="modal-card">
@@ -3548,6 +3595,40 @@ function scrollToCatalogGroup(key){
 }
 
 function updateBatteryBadge(){
+  renderBatteryDock();
+}
+
+// The battery side panel: each test added so far, in order, with its
+// number in the same coloured ring as on the Battery page.
+// (Called from showView, which runs before the rest of this script has
+// loaded, so it uses no top-level constants until the panel is showing.)
+function renderBatteryDock(){
+  const body = document.getElementById('battery-dock-body');
+  if (!body || document.getElementById('battery-dock').classList.contains('hidden')) return;
+  document.getElementById('battery-dock-count').textContent = battery.length
+    ? `${battery.length} test${battery.length === 1 ? '' : 's'}` : '';
+  if (battery.length === 0){
+    body.innerHTML = '<p class="battery-dock-empty">No tests yet. Click <b>Configure &amp; add</b> on a test to add it here.</p>';
+  } else {
+    const { estimatedMinutes } = estimateBatteryTiming(battery);
+    body.innerHTML = `<ol class="battery-dock-list">${battery.map((item, i) => {
+      const test = TESTS.find(t => t.id === item.testId);
+      const colour = ORDER_COLOURS[i % ORDER_COLOURS.length];
+      const items = item.params && item.params.itemCount;
+      return `<li>
+        <span class="battery-dock-num" style="--order-colour:${colour}">${i + 1}</span>
+        <span class="battery-dock-name">${escapeHtml(test ? test.name : item.testId)}${items ? `<small>${items} items${item.params.randomizeOrder ? ' · random position' : ''}</small>` : ''}</span>
+      </li>`;
+    }).join('')}</ol>
+    <p class="battery-dock-time">~${estimatedMinutes} min for a participant</p>`;
+  }
+}
+
+function syncBatteryDock(viewId){
+  const show = viewId === 'view-catalog' || viewId === 'view-customize';
+  document.getElementById('battery-dock').classList.toggle('hidden', !show);
+  document.body.classList.toggle('battery-docked', show);
+  if (show) renderBatteryDock();
 }
 
 // Open the customize form to ADD a new item to the battery
@@ -3822,6 +3903,7 @@ function showView(id){
   document.querySelectorAll('.user-bar button[data-view]').forEach(b => {
     b.classList.toggle('nav-current', b.dataset.view === id);
   });
+  syncBatteryDock(id);
 }
 
 function goToHome(){
