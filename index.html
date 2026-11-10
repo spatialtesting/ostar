@@ -3875,8 +3875,17 @@ function renderBatteryDock(){
   }
 }
 
+// The battery panel shows only while someone is building a battery: on the
+// Configure page, and on the catalog once the battery has a test or they
+// came from the Battery page. Browsing the catalog on its own has no panel.
+// var, not let: showView can run before this line at page load.
+var buildingBattery = false;
+function batteryCount(){ try { return battery.length; } catch (e) { return 0; } }
 function syncBatteryDock(viewId){
-  const show = viewId === 'view-catalog' || viewId === 'view-customize';
+  if (viewId === 'view-battery') buildingBattery = true;
+  else if (viewId !== 'view-catalog' && viewId !== 'view-customize') buildingBattery = false;
+  const show = viewId === 'view-customize' ||
+    (viewId === 'view-catalog' && (buildingBattery || batteryCount() > 0));
   document.getElementById('battery-dock').classList.toggle('hidden', !show);
   document.body.classList.toggle('battery-docked', show);
   if (show) renderBatteryDock();
